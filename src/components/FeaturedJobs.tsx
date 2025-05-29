@@ -112,7 +112,7 @@ const FeaturedJobs = () => {
         </AnimatedSection>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .floating-shapes {
           position: relative;
           width: 100%;

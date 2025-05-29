@@ -70,7 +70,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .wave-animation {
           background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
           animation: wave 3s ease-in-out infinite;
