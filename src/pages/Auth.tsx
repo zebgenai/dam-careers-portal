@@ -1,15 +1,121 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building, User, Mail, Lock, Phone, MapPin, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Building, User, Mail, Lock, Phone, MapPin, FileText, AlertCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    name: "",
+    phone: "",
+    city: "",
+    role: "job_seeker"
+  });
+
+  const { signIn, signUp, user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await signIn(formData.email, formData.password);
+      
+      if (error) {
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have been successfully logged in."
+        });
+        navigate("/");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: "An unexpected error occurred.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Registration Failed",
+        description: "Passwords do not match.",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await signUp(formData.email, formData.password, {
+        name: formData.name,
+        phone: formData.phone,
+        city: formData.city,
+        role: formData.role
+      });
+
+      if (error) {
+        toast({
+          title: "Registration Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Registration Successful!",
+          description: "Please check your email to verify your account."
+        });
+        setActiveTab("login");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: "An unexpected error occurred.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
@@ -51,16 +157,20 @@ const Auth = () => {
                 </TabsList>
 
                 <TabsContent value="login" className="space-y-4">
-                  <div className="space-y-4">
+                  <form onSubmit={handleLogin} className="space-y-4">
                     <div>
                       <Label htmlFor="email">Email Address</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="email"
+                          name="email"
                           type="email"
                           placeholder="your.email@example.com"
                           className="pl-10"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
                         />
                       </div>
                     </div>
@@ -70,46 +180,36 @@ const Auth = () => {
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="password"
+                          name="password"
                           type="password"
                           placeholder="Enter your password"
                           className="pl-10"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          required
                         />
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <label className="flex items-center space-x-2">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                        <span className="text-gray-600">Remember me</span>
-                      </label>
-                      <a href="#" className="text-green-600 hover:text-green-700">
-                        Forgot password?
-                      </a>
-                    </div>
-                    <Button className="w-full bg-green-600 hover:bg-green-700 h-11">
-                      Sign In
+                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 h-11" disabled={loading}>
+                      {loading ? "Signing In..." : "Sign In"}
                     </Button>
-                  </div>
+                  </form>
                 </TabsContent>
 
                 <TabsContent value="register" className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="firstName">First Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="firstName"
-                            placeholder="First name"
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="lastName">Last Name</Label>
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
-                          id="lastName"
-                          placeholder="Last name"
+                          id="name"
+                          name="name"
+                          placeholder="Your full name"
+                          className="pl-10"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
                         />
                       </div>
                     </div>
@@ -119,9 +219,13 @@ const Auth = () => {
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="email"
+                          name="email"
                           type="email"
                           placeholder="your.email@example.com"
                           className="pl-10"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
                         />
                       </div>
                     </div>
@@ -131,9 +235,12 @@ const Auth = () => {
                         <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="phone"
+                          name="phone"
                           type="tel"
                           placeholder="+92 XXX XXXXXXX"
                           className="pl-10"
+                          value={formData.phone}
+                          onChange={handleInputChange}
                         />
                       </div>
                     </div>
@@ -143,8 +250,11 @@ const Auth = () => {
                         <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="city"
+                          name="city"
                           placeholder="Your city"
                           className="pl-10"
+                          value={formData.city}
+                          onChange={handleInputChange}
                         />
                       </div>
                     </div>
@@ -154,9 +264,13 @@ const Auth = () => {
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="password"
+                          name="password"
                           type="password"
                           placeholder="Create a strong password"
                           className="pl-10"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          required
                         />
                       </div>
                     </div>
@@ -166,24 +280,20 @@ const Auth = () => {
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="confirmPassword"
+                          name="confirmPassword"
                           type="password"
                           placeholder="Confirm your password"
                           className="pl-10"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          required
                         />
                       </div>
                     </div>
-                    <div className="text-sm">
-                      <label className="flex items-start space-x-2">
-                        <input type="checkbox" className="rounded border-gray-300 mt-1" />
-                        <span className="text-gray-600">
-                          I agree to the <a href="#" className="text-green-600 hover:text-green-700">Terms of Service</a> and <a href="#" className="text-green-600 hover:text-green-700">Privacy Policy</a>
-                        </span>
-                      </label>
-                    </div>
-                    <Button className="w-full bg-green-600 hover:bg-green-700 h-11">
-                      Create Account
+                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 h-11" disabled={loading}>
+                      {loading ? "Creating Account..." : "Create Account"}
                     </Button>
-                  </div>
+                  </form>
                 </TabsContent>
               </Tabs>
 

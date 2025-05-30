@@ -9,7 +9,125 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          admin_notes: string | null
+          applied_at: string | null
+          cover_letter: string | null
+          cv_url: string | null
+          id: string
+          job_id: string
+          status: Database["public"]["Enums"]["application_status"] | null
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          applied_at?: string | null
+          cover_letter?: string | null
+          cv_url?: string | null
+          id?: string
+          job_id: string
+          status?: Database["public"]["Enums"]["application_status"] | null
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          applied_at?: string | null
+          cover_letter?: string | null
+          cv_url?: string | null
+          id?: string
+          job_id?: string
+          status?: Database["public"]["Enums"]["application_status"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          created_by: string | null
+          deadline: string
+          department: string | null
+          description: string
+          experience_required: string | null
+          id: string
+          is_active: boolean | null
+          job_type: string | null
+          location: string
+          posted_at: string | null
+          requirements: string
+          salary_range: string | null
+          title: string
+        }
+        Insert: {
+          created_by?: string | null
+          deadline: string
+          department?: string | null
+          description: string
+          experience_required?: string | null
+          id?: string
+          is_active?: boolean | null
+          job_type?: string | null
+          location: string
+          posted_at?: string | null
+          requirements: string
+          salary_range?: string | null
+          title: string
+        }
+        Update: {
+          created_by?: string | null
+          deadline?: string
+          department?: string | null
+          description?: string
+          experience_required?: string | null
+          id?: string
+          is_active?: boolean | null
+          job_type?: string | null
+          location?: string
+          posted_at?: string | null
+          requirements?: string
+          salary_range?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          id: string
+          name: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          id: string
+          name: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +136,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      application_status: "pending" | "accepted" | "rejected"
+      user_role: "admin" | "job_seeker"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +252,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      application_status: ["pending", "accepted", "rejected"],
+      user_role: ["admin", "job_seeker"],
+    },
   },
 } as const

@@ -1,103 +1,102 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Calendar, Building, Search, Filter, Clock, DollarSign } from "lucide-react";
+import { MapPin, Calendar, Building, Search, Filter, Clock, DollarSign, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { jobsService, Job } from "@/services/jobsService";
+import { useToast } from "@/hooks/use-toast";
 
 const Jobs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
 
-  const jobs = [
-    {
-      id: 1,
-      title: "Computer Operator",
-      location: "Mohmand Dam Site",
-      type: "Full-time",
-      deadline: "2025-06-15",
-      department: "Administration",
-      salary: "Rs. 35,000 - 45,000",
-      experience: "2-3 years",
-      description: "Seeking experienced computer operator for data management, office operations, and administrative support. Must be proficient in MS Office and basic accounting software.",
-      requirements: ["Intermediate or Bachelor's degree", "2+ years computer operation experience", "MS Office proficiency", "Basic English communication"]
-    },
-    {
-      id: 2,
-      title: "Civil Engineer",
-      location: "Mohmand Dam Site",
-      type: "Full-time", 
-      deadline: "2025-06-20",
-      department: "Engineering",
-      salary: "Rs. 80,000 - 120,000",
-      experience: "5+ years",
-      description: "Senior civil engineer required for dam construction oversight, quality control, and project management. Will supervise construction activities and ensure compliance with safety standards.",
-      requirements: ["Bachelor's in Civil Engineering", "5+ years in large construction projects", "AutoCAD proficiency", "PEC registration preferred"]
-    },
-    {
-      id: 3,
-      title: "Heavy Vehicle Driver",
-      location: "Mohmand Dam Site",
-      type: "Full-time",
-      deadline: "2025-06-10",
-      department: "Operations",
-      salary: "Rs. 25,000 - 35,000",
-      experience: "3+ years",
-      description: "Experienced driver for heavy machinery and construction vehicles. Must have valid heavy vehicle license and experience with construction equipment.",
-      requirements: ["Heavy vehicle driving license", "3+ years driving experience", "Clean driving record", "Basic mechanical knowledge"]
-    },
-    {
-      id: 4,
-      title: "Electrical Technician",
-      location: "Mohmand Dam Site",
-      type: "Full-time",
-      deadline: "2025-06-25",
-      department: "Engineering",
-      salary: "Rs. 45,000 - 60,000",
-      experience: "3-5 years",
-      description: "Electrical technician for power systems installation and maintenance. Experience with high voltage systems and industrial electrical equipment required.",
-      requirements: ["Diploma in Electrical Technology", "3+ years industrial experience", "High voltage certification", "Safety training completed"]
-    },
-    {
-      id: 5,
-      title: "Security Guard",
-      location: "Mohmand Dam Site",
-      type: "Full-time",
-      deadline: "2025-06-08",
-      department: "Security",
-      salary: "Rs. 20,000 - 28,000",
-      experience: "1-2 years",
-      description: "Security personnel for site protection and access control. Must be physically fit and available for shift work including nights and weekends.",
-      requirements: ["Matric or equivalent", "Security training certificate", "Physical fitness", "No criminal record"]
-    },
-    {
-      id: 6,
-      title: "Mechanical Engineer",
-      location: "Mohmand Dam Site",
-      type: "Full-time",
-      deadline: "2025-06-30",
-      department: "Engineering",
-      salary: "Rs. 70,000 - 100,000",
-      experience: "4+ years",
-      description: "Mechanical engineer for equipment maintenance, installation oversight, and mechanical systems design. Experience with heavy machinery and industrial equipment required.",
-      requirements: ["Bachelor's in Mechanical Engineering", "4+ years industrial experience", "AutoCAD/SolidWorks proficiency", "Equipment maintenance experience"]
-    }
-  ];
+  const { user, isAdmin } = useAuth();
+  const { toast } = useToast();
 
   const departments = ["Administration", "Engineering", "Operations", "Security", "Finance"];
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = selectedDepartment === "all" || job.department === selectedDepartment;
-    const matchesType = selectedType === "all" || job.type === selectedType;
-    
-    return matchesSearch && matchesDepartment && matchesType;
-  });
+  useEffect(() => {
+    loadJobs();
+    if (user) {
+      loadUserApplications();
+    }
+  }, [searchTerm, selectedDepartment, selectedType, user]);
+
+  const loadJobs = async () => {
+    try {
+      setLoading(true);
+      const filters = {
+        department: selectedDepartment !== "all" ? selectedDepartment : undefined,
+        type: selectedType !== "all" ? selectedType : undefined,
+        search: searchTerm || undefined
+      };
+      
+      const jobsData = await jobsService.getJobs(filters);
+      setJobs(jobsData || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to load jobs. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Error loading jobs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadUserApplications = async () => {
+    try {
+      const applications = await jobsService.getUserApplications();
+      const appliedJobIds = new Set(applications?.map(app => app.job_id) || []);
+      setAppliedJobs(appliedJobIds);
+    } catch (error) {
+      console.error("Error loading user applications:", error);
+    }
+  };
+
+  const handleApply = async (jobId: string) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to apply for jobs.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await jobsService.applyForJob(jobId);
+      setAppliedJobs(prev => new Set([...prev, jobId]));
+      toast({
+        title: "Application Submitted!",
+        description: "Your application has been submitted successfully."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Application Failed",
+        description: error.message || "Failed to submit application.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,7 +117,15 @@ const Jobs = () => {
               <Link to="/" className="text-gray-600 hover:text-green-700 transition-colors">Home</Link>
               <Link to="/jobs" className="text-green-700 font-medium hover:text-green-800 transition-colors">Jobs</Link>
               <Link to="/about" className="text-gray-600 hover:text-green-700 transition-colors">About</Link>
-              <Button className="bg-green-600 hover:bg-green-700">Login / Register</Button>
+              {user ? (
+                <Link to="/profile">
+                  <Button className="bg-green-600 hover:bg-green-700">Profile</Button>
+                </Link>
+              ) : (
+                <Link to="/auth">
+                  <Button className="bg-green-600 hover:bg-green-700">Login / Register</Button>
+                </Link>
+              )}
             </nav>
           </div>
         </div>
@@ -175,7 +182,7 @@ const Jobs = () => {
         {/* Results Header */}
         <div className="flex justify-between items-center mb-6">
           <p className="text-gray-600">
-            Showing <span className="font-semibold">{filteredJobs.length}</span> job opportunities
+            Showing <span className="font-semibold">{jobs.length}</span> job opportunities
           </p>
           <div className="flex items-center space-x-2">
             <Filter className="h-4 w-4 text-gray-400" />
@@ -183,80 +190,105 @@ const Jobs = () => {
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading jobs...</p>
+          </div>
+        )}
+
         {/* Job Listings */}
-        <div className="space-y-6">
-          {filteredJobs.map((job) => (
-            <Card key={job.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-800 group-hover:text-green-700 transition-colors mb-2">
-                          {job.title}
-                        </h3>
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <Badge className="bg-green-100 text-green-800">
-                            {job.type}
-                          </Badge>
-                          <Badge variant="outline" className="border-green-200">
-                            {job.department}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {job.experience}
-                          </Badge>
+        {!loading && (
+          <div className="space-y-6">
+            {jobs.map((job) => (
+              <Card key={job.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+                <CardContent className="p-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-800 group-hover:text-green-700 transition-colors mb-2">
+                            {job.title}
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <Badge className="bg-green-100 text-green-800">
+                              {job.job_type}
+                            </Badge>
+                            <Badge variant="outline" className="border-green-200">
+                              {job.department}
+                            </Badge>
+                            <Badge variant="secondary">
+                              {job.experience_required}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
+                      
+                      <p className="text-gray-600 mb-4 leading-relaxed">
+                        {job.description}
+                      </p>
+                      
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MapPin className="h-4 w-4 mr-2 text-green-600" />
+                          {job.location}
+                        </div>
+                        {job.salary_range && (
+                          <div className="flex items-center text-sm text-gray-500">
+                            <DollarSign className="h-4 w-4 mr-2 text-green-600" />
+                            {job.salary_range}
+                          </div>
+                        )}
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Clock className="h-4 w-4 mr-2 text-green-600" />
+                          {job.experience_required}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="h-4 w-4 mr-2 text-red-500" />
+                          Deadline: {formatDate(job.deadline)}
+                        </div>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-800 mb-2">Requirements:</h4>
+                        <p className="text-sm text-gray-600">{job.requirements}</p>
+                      </div>
                     </div>
                     
-                    <p className="text-gray-600 mb-4 leading-relaxed">
-                      {job.description}
-                    </p>
-                    
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="h-4 w-4 mr-2 text-green-600" />
-                        {job.location}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <DollarSign className="h-4 w-4 mr-2 text-green-600" />
-                        {job.salary}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Clock className="h-4 w-4 mr-2 text-green-600" />
-                        {job.experience}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Calendar className="h-4 w-4 mr-2 text-red-500" />
-                        Deadline: {new Date(job.deadline).toLocaleDateString()}
-                      </div>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <h4 className="font-semibold text-gray-800 mb-2">Key Requirements:</h4>
-                      <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                        {job.requirements.slice(0, 3).map((req, index) => (
-                          <li key={index}>{req}</li>
-                        ))}
-                      </ul>
+                    <div className="lg:ml-6 flex flex-col space-y-3 lg:items-end">
+                      {user ? (
+                        appliedJobs.has(job.id) ? (
+                          <Button disabled className="bg-gray-400">
+                            Already Applied
+                          </Button>
+                        ) : (
+                          <Button 
+                            onClick={() => handleApply(job.id)}
+                            className="bg-green-600 hover:bg-green-700 group-hover:scale-105 transition-transform"
+                          >
+                            Apply Now
+                          </Button>
+                        )
+                      ) : (
+                        <Link to="/auth">
+                          <Button className="bg-green-600 hover:bg-green-700">
+                            Login to Apply
+                          </Button>
+                        </Link>
+                      )}
+                      <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
+                        View Details
+                      </Button>
                     </div>
                   </div>
-                  
-                  <div className="lg:ml-6 flex flex-col space-y-3 lg:items-end">
-                    <Button className="bg-green-600 hover:bg-green-700 group-hover:scale-105 transition-transform">
-                      Apply Now
-                    </Button>
-                    <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {filteredJobs.length === 0 && (
+        {!loading && jobs.length === 0 && (
           <Card className="border-0 shadow-lg">
             <CardContent className="text-center py-12">
               <div className="text-gray-400 mb-4">
@@ -287,9 +319,19 @@ const Jobs = () => {
               <p className="text-green-100 mb-6">
                 Submit your CV and we'll notify you when new opportunities that match your skills become available.
               </p>
-              <Button size="lg" className="bg-white text-green-700 hover:bg-green-50">
-                Upload Your CV
-              </Button>
+              {user ? (
+                <Link to="/profile">
+                  <Button size="lg" className="bg-white text-green-700 hover:bg-green-50">
+                    Upload Your CV
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/auth">
+                  <Button size="lg" className="bg-white text-green-700 hover:bg-green-50">
+                    Create Account
+                  </Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
         </div>
