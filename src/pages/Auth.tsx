@@ -1,14 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building, User, Mail, Lock, Phone, MapPin, FileText, AlertCircle } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import AuthHeader from "@/components/auth/AuthHeader";
+import AuthForm from "@/components/auth/AuthForm";
+import AuthPromoBanner from "@/components/auth/AuthPromoBanner";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
@@ -119,27 +116,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b-2 border-green-600">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-700 rounded-lg flex items-center justify-center">
-                <Building className="text-white h-6 w-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-green-800">Mohmand Dam Job Portal</h1>
-                <p className="text-sm text-gray-600">Building Pakistan's Future</p>
-              </div>
-            </Link>
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link to="/" className="text-gray-600 hover:text-green-700 transition-colors">Home</Link>
-              <Link to="/jobs" className="text-gray-600 hover:text-green-700 transition-colors">Jobs</Link>
-              <Link to="/about" className="text-gray-600 hover:text-green-700 transition-colors">About</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <AuthHeader />
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
@@ -148,179 +125,17 @@ const Auth = () => {
             <p className="text-gray-600">Join thousands of job seekers in Pakistan's biggest project</p>
           </div>
 
-          <Card className="border-0 shadow-xl">
-            <CardContent className="p-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login" className="text-sm">Login</TabsTrigger>
-                  <TabsTrigger value="register" className="text-sm">Register</TabsTrigger>
-                </TabsList>
+          <AuthForm
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            formData={formData}
+            loading={loading}
+            onInputChange={handleInputChange}
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+          />
 
-                <TabsContent value="login" className="space-y-4">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          placeholder="your.email@example.com"
-                          className="pl-10"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="password"
-                          name="password"
-                          type="password"
-                          placeholder="Enter your password"
-                          className="pl-10"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 h-11" disabled={loading}>
-                      {loading ? "Signing In..." : "Sign In"}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="register" className="space-y-4">
-                  <form onSubmit={handleRegister} className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Full Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="name"
-                          name="name"
-                          placeholder="Your full name"
-                          className="pl-10"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          placeholder="your.email@example.com"
-                          className="pl-10"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          placeholder="+92 XXX XXXXXXX"
-                          className="pl-10"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="city"
-                          name="city"
-                          placeholder="Your city"
-                          className="pl-10"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="password"
-                          name="password"
-                          type="password"
-                          placeholder="Create a strong password"
-                          className="pl-10"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          placeholder="Confirm your password"
-                          className="pl-10"
-                          value={formData.confirmPassword}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 h-11" disabled={loading}>
-                      {loading ? "Creating Account..." : "Create Account"}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
-                  {activeTab === "login" ? "Don't have an account?" : "Already have an account?"}
-                  <button
-                    onClick={() => setActiveTab(activeTab === "login" ? "register" : "login")}
-                    className="ml-1 text-green-600 hover:text-green-700 font-medium"
-                  >
-                    {activeTab === "login" ? "Sign up" : "Sign in"}
-                  </button>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="mt-8 text-center">
-            <Card className="border-0 shadow-lg bg-gradient-to-r from-green-600 to-green-700 text-white">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-center space-x-2">
-                  <FileText className="h-5 w-5" />
-                  <span className="text-sm">Ready to apply? Upload your CV after registration!</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <AuthPromoBanner />
         </div>
       </div>
     </div>
