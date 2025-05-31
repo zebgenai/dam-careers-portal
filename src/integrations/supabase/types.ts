@@ -50,6 +50,53 @@ export type Database = {
           },
         ]
       }
+      job_applications: {
+        Row: {
+          applied_at: string
+          cv_filename: string
+          cv_url: string
+          email: string
+          full_name: string
+          id: string
+          job_id: string
+          message: string | null
+          phone: string | null
+          status: string | null
+        }
+        Insert: {
+          applied_at?: string
+          cv_filename: string
+          cv_url: string
+          email: string
+          full_name: string
+          id?: string
+          job_id: string
+          message?: string | null
+          phone?: string | null
+          status?: string | null
+        }
+        Update: {
+          applied_at?: string
+          cv_filename?: string
+          cv_url?: string
+          email?: string
+          full_name?: string
+          id?: string
+          job_id?: string
+          message?: string | null
+          phone?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           created_by: string | null

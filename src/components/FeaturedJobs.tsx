@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,7 +91,7 @@ const FeaturedJobs = () => {
                       Deadline: {new Date(job.deadline).toLocaleDateString()}
                     </div>
                   </div>
-                  <Link to="/auth">
+                  <Link to="/jobs">
                     <Button className="w-full bg-green-600 hover:bg-green-700 transition-all duration-300 hover:scale-105 hover:shadow-lg group-hover:animate-pulse">
                       Apply Now
                     </Button>
